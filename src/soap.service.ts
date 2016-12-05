@@ -14,6 +14,10 @@ export class SoapService {
 
     private targetNamespace:string = '';
 
+    private authUserName:string = '';
+    private authPassword:string = '';
+    private useBasicAuthentication:boolean = false;
+
     private envelopeBuilder_:(requestBody:string) => string = null;
     private xmlResponseHandler_:(response:NodeListOf<Element>) => void = null;
     private jsoResponseHandler_:(response:{}) => void = null;
@@ -49,6 +53,20 @@ export class SoapService {
     set testMode(on:boolean) {
         this.debug = on;
         this.asynchronous = !on;
+    }
+
+    public setBasicAuthentication(username:string, password:string) {
+        if (username && password && username.length > 0 && password.length > 0) {
+            this.useBasicAuthentication = true;
+            this.authUserName = username;
+            this.authPassword = password;
+        }
+    }
+
+    public unsetBasicAuthentication() {
+        this.useBasicAuthentication = false;
+        this.authUserName = '';
+        this.authPassword = '';
     }
 
     public post(method:string, parameters:any, responseRoot?:string):void {
@@ -107,6 +125,10 @@ export class SoapService {
 
         xmlHttp.setRequestHeader("SOAPAction", this.targetNamespace + '/' + encodeURIComponent(method));
         xmlHttp.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+        // Did we set basic authentication?
+        if (this.useBasicAuthentication) {
+            xmlHttp.setRequestHeader("Authorization", 'Basic ' + btoa(this.authUserName + ':' + this.authPassword));
+        }
 
         xmlHttp.send(envelopedRequest);
     }
